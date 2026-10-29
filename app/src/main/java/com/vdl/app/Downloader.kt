@@ -70,6 +70,8 @@ object Downloader {
             req.addOption("--merge-output-format", "mp4")
             req.addOption("--no-playlist")
             req.addOption("--no-mtime")
+                        val ck = File(ctx.filesDir, "cookies.txt")
+            if (ck.exists()) req.addOption("--cookies", ck.absolutePath)
                         var attempt = 0
             while (true) {
                 try {
@@ -142,6 +144,8 @@ object Downloader {
         val req = YoutubeDLRequest(url)
         req.addOption("--flat-playlist")
         req.addOption("-j")
+        val ck = File(App.instance.filesDir, "cookies.txt")
+        if (ck.exists()) req.addOption("--cookies", ck.absolutePath)
                 val out = try {
             YoutubeDL.getInstance().execute(req, "acc-" + UUID.randomUUID()).out
         } catch (e: Exception) {
