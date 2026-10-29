@@ -17,6 +17,7 @@ class App : Application(), ImageLoaderFactory {
                 YoutubeDL.getInstance().init(this)
                 FFmpeg.getInstance().init(this)
                 ready.value = true
+                try { YoutubeDL.getInstance().updateYoutubeDL(this) } catch (_: Exception) { }
             } catch (e: Exception) {
                 initError.value = e.message
             }
