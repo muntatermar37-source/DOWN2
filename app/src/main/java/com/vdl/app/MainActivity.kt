@@ -35,6 +35,9 @@ import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import java.io.File
 
 object Shared {
     val link = mutableStateOf("")
@@ -229,6 +232,26 @@ fun SettingsScreen() {
     var busy by remember { mutableStateOf(false) }
     var prog by remember { mutableFloatStateOf(0f) }
     var engine by remember { mutableStateOf("-") }
+        val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            engMsg = try {
+                ctx.contentResolver.openInputStream(uri)!!.use { i ->
+                    File(ctx.filesDir, "cookies.txt").outputStream().use { o -> i.copyTo(o) }
+                }
+                "تم استيراد الكوكيز ✔"
+            } catch (e: Exception) { "فشل: ${e.message}" }
+        }
+    }
+        val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            engMsg = try {
+                ctx.contentResolver.openInputStream(uri)!!.use { i ->
+                    File(ctx.filesDir, "cookies.txt").outputStream().use { o -> i.copyTo(o) }
+                }
+                "تم استيراد الكوكيز ✔"
+            } catch (e: Exception) { "فشل: ${e.message}" }
+        }
+    }
 
     LaunchedEffect(Unit) {
         engine = withContext(Dispatchers.IO) {
@@ -294,6 +317,9 @@ fun SettingsScreen() {
                 }
             }
         }
-        Text("المستودع: ${BuildConfig.REPO}", fontSize = 12.sp, color = Color.Gray)
+                OutlinedButton(onClick = { picker.launch(arrayOf("*/*")) }, modifier = Modifier.fillMaxWidth()) {
+            Text("استيراد كوكيز تيك توك (cookies.txt)")
+        }
+            Text("المستودع: ${BuildConfig.REPO}", fontSize = 12.sp, color = Color.Gray)
+        }
     }
-}
