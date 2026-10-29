@@ -70,8 +70,18 @@ object Downloader {
             req.addOption("--merge-output-format", "mp4")
             req.addOption("--no-playlist")
             req.addOption("--no-mtime")
-            YoutubeDL.getInstance().execute(req, key) { p, _, _ ->
-                upd(key) { it.copy(progress = (p / 100f).coerceIn(0f, 1f)) }
+                        var attempt = 0
+            while (true) {
+                try {
+                    YoutubeDL.getInstance().execute(req, key) { p, _, _ ->
+                        upd(key) { it.copy(progress = (p / 100f).coerceIn(0f, 1f)) }
+                    }
+                    break
+                } catch (e: Exception) {
+                    attempt++
+                    if (attempt >= 3) throw e
+                    delay(2000)
+                }
             }
 
             val f = dir.listFiles()?.filter { it.isFile && !it.name.endsWith(".part") && !it.name.endsWith(".ytdl") }
@@ -117,14 +127,30 @@ object Downloader {
             else -> runCatching { Uri.parse(url).host ?: "" }.getOrDefault("")
         }
     }
-
+        private fun fetchSecUid(profileUrl: String): String? = try {
+        val c = java.net.URL(profileUrl).openConnection() as java.net.HttpURLConnection
+        c.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36")
+        c.setRequestProperty("Accept-Language", "en-US,en;q=0.9")
+        c.connectTimeout = 15000
+        c.readTimeout = 15000
+        val html = c.inputStream.bufferedReader().readText()
+        Regex("\"secUid\":\"([^\"]+)\"").find(html)?.groupValues?.get(1)
+    } catch (e: Exception) { null }
     /** يجلب قائمة فيديوهات حساب تيك توك (بدون تنزيل) */
     suspend fun fetchAccount(url: String): List<VideoEntry> = withContext(Dispatchers.IO) {
         waitReady()
         val req = YoutubeDLRequest(url)
         req.addOption("--flat-playlist")
         req.addOption("-j")
-        val out = YoutubeDL.getInstance().execute(req, "acc-" + UUID.randomUUID()).out
+                val out = try {
+            YoutubeDL.getInstance().execute(req, "acc-" + UUID.randomUUID()).out
+        } catch (e: Exception) {
+            val sec = fetchSecUid(url) ?: throw e
+            val r2 = YoutubeDLRequest("tiktokuser:$sec")
+            r2.addOption("--flat-playlist")
+            r2.addOption("-j")
+            YoutubeDL.getInstance().execute(r2, "acc-" + UUID.randomUUID()).out
+        }
         val list = out.lines().filter { it.trim().startsWith("{") }.mapNotNull { line ->
             try {
                 val o = JSONObject(line)
