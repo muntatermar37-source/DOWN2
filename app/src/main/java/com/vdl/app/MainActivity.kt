@@ -232,15 +232,7 @@ fun SettingsScreen() {
     var busy by remember { mutableStateOf(false) }
     var prog by remember { mutableFloatStateOf(0f) }
     var engine by remember { mutableStateOf("-") }
-        if (uri != null) {
-            engMsg = try {
-                ctx.contentResolver.openInputStream(uri)!!.use { i ->
-                    File(ctx.filesDir, "cookies.txt").outputStream().use { o -> i.copyTo(o) }
-                }
-                "تم استيراد الكوكيز ✔"
-            } catch (e: Exception) { "فشل: ${e.message}" }
-        }
-    }
+       
         val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
             engMsg = try {
