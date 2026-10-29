@@ -9,6 +9,7 @@ import com.yausername.youtubedl_android.YoutubeDL
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class App : Application(), ImageLoaderFactory {
+    init { instance = this }
     override fun onCreate() {
         super.onCreate()
         Store.init(this)
@@ -28,6 +29,7 @@ class App : Application(), ImageLoaderFactory {
         ImageLoader.Builder(this).components { add(VideoFrameDecoder.Factory()) }.build()
 
     companion object {
+        lateinit var instance: App
         val ready = MutableStateFlow(false)
         val initError = MutableStateFlow<String?>(null)
     }
